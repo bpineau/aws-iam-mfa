@@ -12,14 +12,14 @@ Structure
 =========
 
 We don't grant rights to the users by default (except the minimum rights needed to manage their own password, mfa, account).
-Users must assume roles to do anything else.
+Users must `assume` roles to do anything else.
 
 The "assume role" privileges are protected by policies on both sides (the assumed role, the assuming group/user):
 * The assumed role's "assume policy" mandate a mfa authenticated user (filtering allowed group here would be more natural, but AWS don't allow using group in principals specifications, so we can't)
 * The various user's groups are given the privileges to assume specific roles (depending on the group)
 
-Even privileged/admin group is given the right to assume the readonly role,
-so admins don't have to run everything with super privileges, they can use
+Even privileged/admin group is given the right to assume the readonly role.
+Admins don't have to run everything with super privileges: they can use
 least privileges for normal, day to day, read operations.
 
 AWS [limits](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-limits.html) to keep in mind:
@@ -37,7 +37,7 @@ person that create the account.
 
 The users' PGP public keys can be provided either as "keybase:userid", or inline (base64 encoded).
 
-To decrypt those secrets the user should:
+To decrypt their secrets the user should:
 
 ```
 # or "echo ... | keybase pgp decrypt"
@@ -48,7 +48,7 @@ echo "wcBMA..." | base64 -d | gpg --decrypt -
 AWS configuration
 =================
 
-In the AWS console (web interface) : 
+In AWS console (web interface) : 
 ```
 Navigation bar > user@account > Switch Role > ...
 ```
@@ -86,8 +86,8 @@ env AWS_PROFILE=readonly terraform plan
 env AWS_PROFILE=admin    terraform apply
 ```
 
-If we don't use `aws-vault` (which will take car of generating sesions token and ephemeral keys for us),
-We must write our aws key in ~/.aws/config to get the the MFA prompt when calling an alternate profile:
+If we don't use `aws-vault` (which will take care of generating sesions token and ephemeral keys for us),
+we have to write AWS keys in ~/.aws/config to get the the MFA prompt when calling an alternate profile:
 ```bash
 # without aws keys in ~/.aws/config ,
 # this won't work and display a dumb 'aws_access_key_id':
@@ -111,8 +111,8 @@ Enter MFA code:
 
 To avoid writing keys in ~/.aws/config or using aws-vault, we can manually
 assume a role, but that's tedious. We have to generate a session token
-(using a MFA pin code), then use this generated a token and a temporary aws
-key pair, and use that to call the assume role to generate yet another key
+(using a MFA pin code), then use this generated a token and a temporary AWS
+key pair, and use that to call sts assume role, to generate yet another key
 pair + token.
 
 Then we can use this final ephemeral key pair and token to do actual stuff:
@@ -137,15 +137,15 @@ $ aws s3 ls s3://
 ```
 
 `aws-vault` saves us all this tedious work, and more importantly does not require
-us to write our keys in ~/.aws/config or to write them in shell's environment
-(which may end up in shell's history, or be collected by a keylogger).
+us to write our keys in ~/.aws/config or in shell's environment
+(which may end up in shell's history, or collected by a keylogger).
 
 
 Usage with aws-vault
 ====================
 
 Using [aws-vault](https://github.com/99designs/aws-vault) is not requiered,
-but that's a good way to improve user's access keys safety.
+but that's a good way to improve user's AWS keys safety.
 
 aws-vault will store the access/secret key encrypted in the MacOs Keychain,
 Linux' Kwallet, gnome-keyring, or an encrypted file.
@@ -155,9 +155,9 @@ It will use that key to generate (and rotate)
 and inject those ephemeral credentials as environment variables to shells and applications.
 
 This way,
-* Our user's AWS key pair always remain encrypted at rest
+* Our AWS key pair remains encrypted at rest
 * MFA is enforced, even for cli tools and API calls
-* Applications only see ephemeral keys/tokens, scoped to the assumed role (leaks are less devastating)
+* Applications only see _ephemeral keys_, scoped to the assumed role (leaks are less devastating)
 * aws-vault pass those ephemeral keys to apps using environment (nothing is written to disk)
 * Switching beween roles becomes easy and natural
 
@@ -167,7 +167,7 @@ sudo curl -Lo /usr/local/bin/aws-vault \
   https://github.com/99designs/aws-vault/releases/download/v4.2.1/aws-vault-linux-amd64
 sudo chmod +x /usr/local/bin/aws-vault
 
-vim ~/.aws/config # remove the aws keys if any
+vim ~/.aws/config # remove AWS keys (if any)
 ```
 
 We only need to register the base profile (here, "default"), not the assumed role's profile.
