@@ -9,7 +9,6 @@ resource "aws_iam_access_key" "accesskey" {
 }
 
 resource "aws_iam_user_login_profile" "profile" {
-  user    = "${var.user}"
   user    = "${aws_iam_user.user.name}"
   pgp_key = "${var.pgp_key}"
 
